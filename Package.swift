@@ -12,14 +12,12 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-argument-parser", exact: "1.2.2"),
-        .package(url: "https://github.com/JohnSundell/Files", exact: "4.2.0")
+        .package(url: "https://github.com/apple/swift-argument-parser", exact: "1.2.2")
     ],
     targets: [
         .executableTarget(
             name: "StaticArrayGenerator",
             dependencies: [
-                .product(name: "Files", package: "Files"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser")
             ]
         ),
