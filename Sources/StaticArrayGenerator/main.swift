@@ -3,7 +3,6 @@ import Foundation
 let destinationFilePath = #file.deletingLastPathComponent
     .deletingLastPathComponent
     .appendingPathComponent("StaticArray")
-    .appendingPathComponent("StaticArray.swift")
 
 if #available(macOS 13.0, *) {
     GenerateCommand.main([

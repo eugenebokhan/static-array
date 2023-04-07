@@ -18,205 +18,213 @@ struct GenerateCommand: ParsableCommand {
     private var destination: String
 
     @Option(help: "Maximum dimension of generated Static Array")
-    private var maxDimension: Int = 20
+    private var maxDimension: Int = 27
 
     // MARK: - Functions
 
     func run() throws {
-        try self.generateCode()
+        try self.writeCode()
     }
 
-    private func generateCode() throws {
-        let url = URL(fileURLWithPath: self.destination)
+    private func writeCode() throws {
+        let url = URL(filePath: self.destination, directoryHint: .isDirectory)
 
         guard self.maxDimension > 2
         else { throw Error.unsupportedMaxDimension }
 
-        if FileManager.default.fileExists(atPath: self.destination) {
-            try FileManager.default.removeItem(at: url)
-        }
+        try FileManager.default.contentsOfDirectory(atPath: self.destination)
+            .filter { $0.contains("StaticArray") }
+            .forEach { try FileManager.default.removeItem(at: url.appending(path: $0)) }
 
+        for d in 2 ... self.maxDimension {
+            let fileURL = url.appending(component: "StaticArray\(d).swift")
+            try self.generateCode(currentD: d).write(
+                to: fileURL,
+                atomically: true,
+                encoding: .utf8
+            )
+        }
+    }
+
+    private func generateCode(currentD: Int) -> String {
         var result = """
-        import Foundation\n\n
+        import Foundation
+
+        public struct StaticArray\(currentD)<T> {
+            public typealias Values = (
         """
 
-        for currentD in  2 ... self.maxDimension {
-            result += """
-            public struct StaticArray\(currentD)<T> {
-                public typealias Values = (
-            """
+        (0 ..< currentD - 1).forEach { _ in result += "T, " }
+        result += "T)\n\n"
 
-            (0 ..< currentD - 1).forEach { _ in result += "T, " }
-            result += "T)\n\n"
+        // MARK: - Properties
 
-            // MARK: - Properties
+        result += "    private var values: Values\n\n"
 
-            result += "    private var values: Values\n\n"
+        // MARK: - Init
 
-            // MARK: - Init
-
-            result += """
+        result += """
                 public init(values: Values) {
                     self.values = values
                 }\n\n
             """
 
-            result += """
+        result += """
                 public init(repeating value: T) {
                     self.values = (\n
             """
-            (0 ..< currentD - 1).forEach { i in
-                result += "            value,\n"
-            }
-            result += """
+        (0 ..< currentD - 1).forEach { i in
+            result += "            value,\n"
+        }
+        result += """
                         value
                     )
                 }\n\n
             """
 
-            result += """
+        result += """
                 init(array: [T]) throws {
                     guard array.count == \(currentD) else { fatalError("array size mismatch") }
                     self.values = (\n
             """
-            (0 ..< currentD - 1).forEach { i in
-                result += "            array[\(i)],\n"
-            }
-            result += """
+        (0 ..< currentD - 1).forEach { i in
+            result += "            array[\(i)],\n"
+        }
+        result += """
                         array[\(currentD - 1)]
                     )
                 }\n\n
             """
 
-            // MARK: - Subscript
+        // MARK: - Subscript
 
-            result += """
+        result += """
                 public subscript(_ index: Int) -> T {
                     get {
                         switch index {\n
             """
-            (0 ..< currentD).forEach { i in
-                result += "            case \(i): return self.values.\(i)\n"
-            }
-            result += """
+        (0 ..< currentD).forEach { i in
+            result += "            case \(i): return self.values.\(i)\n"
+        }
+        result += """
                         default: fatalError("index out of range")
                         }
                     }
                     set {
                         switch index {\n
             """
-            (0 ..< currentD).forEach { i in
-                result += "            case \(i): self.values.\(i) = newValue\n"
-            }
-            result += """
+        (0 ..< currentD).forEach { i in
+            result += "            case \(i): self.values.\(i) = newValue\n"
+        }
+        result += """
                         default: fatalError("index out of range")
                         }
                     }
                 }\n\n
             """
 
-            // MARK: - Getters and Setters
+        // MARK: - Getters and Setters
 
-            if currentD >= 3 {
-                (2 ..< currentD).forEach { returnD in
-                    let maxOffset = currentD - returnD
-                    result += """
+        if currentD >= 3 {
+            (2 ..< currentD).forEach { returnD in
+                let maxOffset = currentD - returnD
+                result += """
                         @inlinable public func get\(returnD)(from offset: Int = 0) ->  StaticArray\(returnD)<T> {
                             switch offset {\n
                     """
-                    (0 ... maxOffset).forEach { offset in
-                        result += """
+                (0 ... maxOffset).forEach { offset in
+                    result += """
                                  case \(offset):
                                     return StaticArray\(returnD)(values: (\n
                         """
-                        (offset ..< offset + returnD - 1).forEach { i in
-                            result += "                self[\(i)],\n"
-                        }
-                        result += """
+                    (offset ..< offset + returnD - 1).forEach { i in
+                        result += "                self[\(i)],\n"
+                    }
+                    result += """
                                         self[\(offset + returnD - 1)]
                                     ))\n
                         """
-                    }
-                    result += """
+                }
+                result += """
                             default:
                                 fatalError("offset out of available range")
                             }
                         }\n\n
                     """
-                }
+            }
 
-                (2 ..< currentD).forEach { returnD in
-                    let maxOffset = currentD - returnD
-                    result += """
+            (2 ..< currentD).forEach { returnD in
+                let maxOffset = currentD - returnD
+                result += """
                         @inlinable public mutating func set\(returnD)(_ array: StaticArray\(returnD)<T>, at offset: Int = 0) {
                             switch offset {\n
                     """
-                    (0 ... maxOffset).forEach { offset in
-                        result += """
+                (0 ... maxOffset).forEach { offset in
+                    result += """
                                  case \(offset):\n
                         """
-                        (offset ..< offset + returnD).forEach { i in
-                            result += "            self[\(i)] = array[\(i - offset)]\n"
-                        }
+                    (offset ..< offset + returnD).forEach { i in
+                        result += "            self[\(i)] = array[\(i - offset)]\n"
                     }
-                    result += """
+                }
+                result += """
                             default:
                                 fatalError("offset out of available range")
                             }
                         }\n\n
                     """
-                }
             }
+        }
 
-            // MARK: - To Array
+        // MARK: - To Array
 
-            result += """
+        result += """
                 @inlinable public  func toArray() -> [T] {
                     [\n
             """
-            (0 ..< currentD - 1).forEach { i in
-                result += "            self[\(i)],\n"
-            }
-            result += """
+        (0 ..< currentD - 1).forEach { i in
+            result += "            self[\(i)],\n"
+        }
+        result += """
                         self[\(currentD - 1)]
                     ]
                 }\n\n
             """
 
-            // MARK: - Map
+        // MARK: - Map
 
-            result += """
+        result += """
                 @inlinable public func map<M>(_ transform: (T) throws -> M) rethrows -> StaticArray\(currentD)<M> {
                     try StaticArray\(currentD)<M>(values: (\n
             """
-            (0 ..< currentD - 1).forEach { i in
-                result += "            transform(self[\(i)]),\n"
-            }
-            result += """
+        (0 ..< currentD - 1).forEach { i in
+            result += "            transform(self[\(i)]),\n"
+        }
+        result += """
                         transform(self[\(currentD - 1)])
                     ))
                 }
             }\n\n
             """
 
-            // MARK: - Zip
+        // MARK: - Zip
 
-            result += """
+        result += """
             public func zip<L, R>(_ lhs: StaticArray\(currentD)<L>, _ rhs: StaticArray\(currentD)<R>) -> StaticArray\(currentD)<(L, R)> {
                 StaticArray\(currentD)(values: (\n
             """
-            (0 ..< currentD - 1).forEach { i in
-                result += "        (lhs[\(i)], rhs[\(i)]),\n"
-            }
-            result += """
+        (0 ..< currentD - 1).forEach { i in
+            result += "        (lhs[\(i)], rhs[\(i)]),\n"
+        }
+        result += """
                     (lhs[\(currentD - 1)], rhs[\(currentD - 1)])
                 ))
             }\n\n
             """
 
-            // MARK: - Collection
+        // MARK: - Collection
 
-            result += """
+        result += """
             extension StaticArray\(currentD): Collection {
                 public typealias Index = Int
                 public var startIndex: Index { 0 }
@@ -225,9 +233,9 @@ struct GenerateCommand: ParsableCommand {
             }\n\n
             """
 
-            // MARK: - Sequence
+        // MARK: - Sequence
 
-            result += """
+        result += """
             extension StaticArray\(currentD): Sequence {
                 public struct Iterator: IteratorProtocol {
                     private var index = 0
@@ -251,9 +259,9 @@ struct GenerateCommand: ParsableCommand {
             }\n\n
             """
 
-            // MARK: - Equitable
+        // MARK: - Equitable
 
-            result += """
+        result += """
             extension StaticArray\(currentD): Equatable where T: Equatable {
                 @inlinable public static func == (lhs: Self, rhs: Self) -> Bool {
                     zip(lhs, rhs).allSatisfy { $0.0 == $0.1 }
@@ -261,9 +269,9 @@ struct GenerateCommand: ParsableCommand {
             }\n\n
             """
 
-            // MARK: - Codable
+        // MARK: - Codable
 
-            result += """
+        result += """
             extension StaticArray\(currentD): Codable where T: Codable {
                 public init(from decoder: Decoder) throws {
                     try self.init(array: [T](from: decoder))
@@ -275,9 +283,9 @@ struct GenerateCommand: ParsableCommand {
             }\n\n
             """
 
-            // MARK: - Additive Arithmetic
+        // MARK: - Additive Arithmetic
 
-            result += """
+        result += """
             extension StaticArray\(currentD): AdditiveArithmetic where T: AdditiveArithmetic {
                 @inlinable public static func - (lhs: Self, rhs: Self) -> Self {
                     zip(lhs, rhs).map { $0.0 - $0.1 }
@@ -307,9 +315,9 @@ struct GenerateCommand: ParsableCommand {
             }\n\n
             """
 
-            // MARK: - Divisible
+        // MARK: - Divisible
 
-            result += """
+        result += """
             extension StaticArray\(currentD): Divisible where T: Divisible {
                 @inlinable public static func / (lhs: Self, rhs: Self) -> Self {
                     zip(lhs, rhs).map { $0.0 / $0.1 }
@@ -325,9 +333,9 @@ struct GenerateCommand: ParsableCommand {
             }\n\n
             """
 
-            // MARK: - Multipliable
+        // MARK: - Multipliable
 
-            result += """
+        result += """
             extension StaticArray\(currentD): Multipliable where T: Multipliable {
                 @inlinable public static func * (lhs: Self, rhs: Self) -> Self {
                     zip(lhs, rhs).map { $0.0 * $0.1 }
@@ -343,9 +351,9 @@ struct GenerateCommand: ParsableCommand {
             }\n\n
             """
 
-            // MARK: - ABSComputable
+        // MARK: - ABSComputable
 
-            result += """
+        result += """
             extension StaticArray\(currentD): ABSComputable where T: ABSComputable {
                 @inlinable public func abs() -> Self {
                     self.map { $0.abs() }
@@ -353,13 +361,7 @@ struct GenerateCommand: ParsableCommand {
             }\n\n
             """
 
-        }
-
-        try! result.write(
-            to: url,
-            atomically: true,
-            encoding: .utf8
-        )
+        return result
     }
 
     static let configuration = CommandConfiguration(abstract: "Static Array Code Generation Tool")
