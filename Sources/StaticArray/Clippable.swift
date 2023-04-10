@@ -19,7 +19,7 @@ extension Int16: Clippable {}
 extension Int32: Clippable {}
 extension Int64: Clippable {}
 
-@available(macOS 11.0, macCatalyst 14.0, *)
+@available(iOS 14.0, macOS 11.0, macCatalyst 14.0, *)
 extension Float16: Clippable {}
 extension Float32: Clippable {}
 extension Float64: Clippable {}

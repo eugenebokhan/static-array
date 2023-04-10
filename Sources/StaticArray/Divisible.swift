@@ -9,7 +9,7 @@ extension Int16: Divisible {}
 extension Int32: Divisible {}
 extension Int64: Divisible {}
 
-@available(macOS 11.0, macCatalyst 14.0, *)
+@available(iOS 14.0, macOS 11.0, macCatalyst 14.0, *)
 extension Float16: Divisible {}
 extension Float32: Divisible {}
 extension Float64: Divisible {}

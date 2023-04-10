@@ -9,7 +9,7 @@ extension Int16: Multipliable {}
 extension Int32: Multipliable {}
 extension Int64: Multipliable {}
 
-@available(macOS 11.0, macCatalyst 14.0, *)
+@available(iOS 14.0, macOS 11.0, macCatalyst 14.0, *)
 extension Float16: Multipliable {}
 extension Float32: Multipliable {}
 extension Float64: Multipliable {}

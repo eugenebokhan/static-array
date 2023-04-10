@@ -1,3 +1,5 @@
+#if os(macOS)
+
 import ArgumentParser
 import Foundation
 
@@ -366,3 +368,5 @@ struct GenerateCommand: ParsableCommand {
 
     static let configuration = CommandConfiguration(abstract: "Static Array Code Generation Tool")
 }
+
+#endif

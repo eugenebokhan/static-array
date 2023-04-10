@@ -1,10 +1,13 @@
-// swift-tools-version: 5.8
+// swift-tools-version: 5.7
 
 import PackageDescription
 
 let package = Package(
     name: "StaticArray",
-    platforms: [ .macOS(.v10_13)],
+    platforms: [
+        .macOS(.v10_13),
+        .iOS(.v11)
+    ],
     products: [
         .library(
             name: "StaticArray",
@@ -21,6 +24,7 @@ let package = Package(
                 .product(name: "ArgumentParser", package: "swift-argument-parser")
             ]
         ),
-        .target(name: "StaticArray")
+        .target(name: "StaticArray"),
+        .testTarget(name: "StaticArrayTests", dependencies: ["StaticArray"])
     ]
 )

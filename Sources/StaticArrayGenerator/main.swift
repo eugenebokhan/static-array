@@ -1,3 +1,5 @@
+#if os(macOS)
+
 import Foundation
 
 let destinationFilePath = #file.deletingLastPathComponent
@@ -19,3 +21,5 @@ extension String {
         NSString(string: self).appendingPathComponent(component)
     }
 }
+
+#endif
