@@ -39,7 +39,7 @@ public struct StaticArray25<T> {
         )
     }
 
-    init(array: [T]) throws {
+    init(array: [T]) {
         guard array.count == 25 else { fatalError("array size mismatch") }
         self.values = (
             array[0],

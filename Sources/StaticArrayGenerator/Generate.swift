@@ -85,7 +85,7 @@ struct GenerateCommand: ParsableCommand {
             """
 
         result += """
-                init(array: [T]) throws {
+                init(array: [T]) {
                     guard array.count == \(currentD) else { fatalError("array size mismatch") }
                     self.values = (\n
             """

@@ -21,7 +21,7 @@ public struct StaticArray7<T> {
         )
     }
 
-    init(array: [T]) throws {
+    init(array: [T]) {
         guard array.count == 7 else { fatalError("array size mismatch") }
         self.values = (
             array[0],

@@ -17,7 +17,7 @@ public struct StaticArray3<T> {
         )
     }
 
-    init(array: [T]) throws {
+    init(array: [T]) {
         guard array.count == 3 else { fatalError("array size mismatch") }
         self.values = (
             array[0],

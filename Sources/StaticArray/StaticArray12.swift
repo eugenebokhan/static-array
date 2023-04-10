@@ -26,7 +26,7 @@ public struct StaticArray12<T> {
         )
     }
 
-    init(array: [T]) throws {
+    init(array: [T]) {
         guard array.count == 12 else { fatalError("array size mismatch") }
         self.values = (
             array[0],

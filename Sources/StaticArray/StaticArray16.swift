@@ -30,7 +30,7 @@ public struct StaticArray16<T> {
         )
     }
 
-    init(array: [T]) throws {
+    init(array: [T]) {
         guard array.count == 16 else { fatalError("array size mismatch") }
         self.values = (
             array[0],
